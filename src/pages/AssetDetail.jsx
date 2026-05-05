@@ -1,16 +1,56 @@
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import Button from "../components/common/Button.jsx";
-import { cryptoAssets } from "../data/siteData.js";
 
 function AssetDetail() {
   const { symbol } = useParams();
-  const asset = cryptoAssets.find((item) => item.symbol === symbol);
+  const [asset, setAsset] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!asset) {
+  useEffect(() => {
+    const fetchAssetData = async () => {
+      try {
+        const response = await fetch('https://crypto-school-project-backend.onrender.com/api/crypto');
+        if (!response.ok) {
+          throw new Error('Failed to fetch crypto data');
+        }
+        const data = await response.json();
+        const foundAsset = data.data.find(item => item.symbol.toLowerCase() === symbol.toLowerCase());
+        if (foundAsset) {
+          setAsset({
+            name: foundAsset.name,
+            symbol: foundAsset.symbol.toLowerCase(),
+            price: `$${foundAsset.price.toLocaleString()}`,
+            change: `${foundAsset.change24h > 0 ? '+' : ''}${foundAsset.change24h}%`,
+            marketCap: 'N/A' // Backend doesn't provide market cap
+          });
+        } else {
+          setError('Asset not found');
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssetData();
+  }, [symbol]);
+
+  if (loading) {
+    return (
+      <section className="page-wrap py-14">
+        <h1 className="text-3xl font-bold text-slate-900">Loading...</h1>
+      </section>
+    );
+  }
+
+  if (error || !asset) {
     return (
       <section className="page-wrap py-14">
         <h1 className="text-3xl font-bold text-slate-900">Asset not found</h1>
-        <p className="mt-3 text-slate-600">The asset you requested does not exist in this demo dataset.</p>
+        <p className="mt-3 text-slate-600">{error || 'The asset you requested does not exist.'}</p>
         <Button to="/explore" className="mt-6">
           Back to Explore
         </Button>

@@ -6,6 +6,7 @@ import AssetDetail from "./pages/AssetDetail.jsx";
 import Explore from "./pages/Explore.jsx";
 import Home from "./pages/Home.jsx";
 import Learn from "./pages/Learn.jsx";
+import Profile from "./pages/Profile.jsx";
 import SignIn from "./pages/SignIn.jsx";
 import SignUp from "./pages/SignUp.jsx";
 
@@ -27,6 +28,7 @@ function App() {
           <Route path="/explore" element={<Explore />} />
           <Route path="/asset/:symbol" element={<AssetDetail />} />
           <Route path="/learn" element={<Learn />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
         </Routes>

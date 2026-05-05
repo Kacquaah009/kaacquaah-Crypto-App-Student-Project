@@ -69,7 +69,11 @@ function SignIn() {
   const isVerifyStep = step === "verify";
   const savedEmail = searchParams.get("email") ?? "";
   const [emailInput, setEmailInput] = useState(savedEmail);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [loginError, setLoginError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(30);
+  const API_BASE_URL = "https://crypto-school-project-backend.onrender.com";
 
   useEffect(() => {
     if (isVerifyStep) {
@@ -105,13 +109,42 @@ function SignIn() {
     setSearchParams({ step: "password", email: trimmedEmail });
   };
 
-  const handlePasswordContinue = (event) => {
+  const handlePasswordContinue = async (event) => {
     event.preventDefault();
-    if (!savedEmail) {
+    if (!savedEmail || !passwordInput.trim()) {
+      setLoginError("Please enter your password.");
       return;
     }
 
-    setSearchParams({ step: "verify", email: savedEmail });
+    setIsSubmitting(true);
+    setLoginError(null);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: savedEmail,
+          password: passwordInput,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("token", data.token);
+        alert("Login successful");
+        window.location.href = "/";
+      } else {
+        setLoginError(data.msg || "Login failed. Please try again.");
+      }
+    } catch (err) {
+      setLoginError(err.message || "Unable to connect to the login service.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleResendClick = () => {
@@ -203,8 +236,10 @@ function SignIn() {
               <div className="mt-2 flex h-12 items-center rounded-2xl border border-[#1555e8] bg-[#1f2430] px-5">
                 <input
                   type="password"
+                  value={passwordInput}
+                  onChange={(event) => setPasswordInput(event.target.value)}
                   className="w-full bg-transparent text-sm text-slate-100 outline-none"
-                  placeholder=""
+                  placeholder="Enter your password"
                 />
                 <span className="text-slate-500">
                   <EyeIcon />
@@ -212,15 +247,20 @@ function SignIn() {
               </div>
             </label>
 
+            {loginError ? (
+              <p className="text-sm text-rose-400">{loginError}</p>
+            ) : null}
+
             <button type="button" className="text-base font-semibold text-[#0b5cff] hover:text-[#2d74ff]">
               Forgot password?
             </button>
 
             <button
               type="submit"
-              className="mt-2 h-12 w-full rounded-[999px] bg-[#4052d2] text-base font-semibold text-white transition-colors hover:bg-[#4a5de2]"
+              disabled={isSubmitting}
+              className="mt-2 h-12 w-full rounded-[999px] bg-[#4052d2] text-base font-semibold text-white transition-colors hover:bg-[#4a5de2] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Continue
+              {isSubmitting ? "Signing in..." : "Continue"}
             </button>
           </form>
         </div>
