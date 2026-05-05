@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import coinbaseLogo from "../assets/coinbase_logo@2x.png";
 
 function GoogleLogo() {
@@ -33,91 +33,24 @@ function AppleLogo() {
   );
 }
 
-function PasskeyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <circle cx="12" cy="8" r="3" />
-      <path d="M5 19a7 7 0 0 1 14 0" />
-      <path d="M18 14l3 3" />
-      <path d="M19.5 15.5l-1.5 1.5" />
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function UserBadgeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <circle cx="12" cy="8" r="3" />
-      <path d="M6 19a6 6 0 0 1 12 0" />
-    </svg>
-  );
-}
-
 function SignIn() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const step = searchParams.get("step") ?? "";
-  const isPasswordStep = step === "password";
-  const isVerifyStep = step === "verify";
-  const savedEmail = searchParams.get("email") ?? "";
-  const [emailInput, setEmailInput] = useState(savedEmail);
-  const [passwordInput, setPasswordInput] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [resendCountdown, setResendCountdown] = useState(30);
+  const navigate = useNavigate();
   const API_BASE_URL = "https://crypto-school-project-backend.onrender.com";
 
-  useEffect(() => {
-    if (isVerifyStep) {
-      setResendCountdown(30);
-    }
-  }, [isVerifyStep, savedEmail]);
-
-  useEffect(() => {
-    if (!isVerifyStep || resendCountdown <= 0) {
-      return;
-    }
-
-    const timerId = setInterval(() => {
-      setResendCountdown((previous) => {
-        if (previous <= 1) {
-          clearInterval(timerId);
-          return 0;
-        }
-        return previous - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerId);
-  }, [isVerifyStep, resendCountdown]);
-
-  const handleEmailContinue = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
-    const trimmedEmail = emailInput.trim();
-    if (!trimmedEmail) {
-      return;
-    }
+    setLoginError(null);
 
-    setSearchParams({ step: "password", email: trimmedEmail });
-  };
-
-  const handlePasswordContinue = async (event) => {
-    event.preventDefault();
-    if (!savedEmail || !passwordInput.trim()) {
-      setLoginError("Please enter your password.");
+    if (!email.trim() || !password.trim()) {
+      setLoginError("Please enter both email and password.");
       return;
     }
 
     setIsSubmitting(true);
-    setLoginError(null);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -126,8 +59,8 @@ function SignIn() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: savedEmail,
-          password: passwordInput,
+          email: email.trim(),
+          password: password.trim(),
         }),
       });
 
@@ -135,10 +68,9 @@ function SignIn() {
 
       if (res.ok) {
         localStorage.setItem("token", data.token);
-        alert("Login successful");
-        window.location.href = "/";
+        navigate("/profile");
       } else {
-        setLoginError(data.msg || "Login failed. Please try again.");
+        setLoginError(data.message || data.msg || "Login failed. Please check your credentials.");
       }
     } catch (err) {
       setLoginError(err.message || "Unable to connect to the login service.");
@@ -147,175 +79,59 @@ function SignIn() {
     }
   };
 
-  const handleResendClick = () => {
-    if (resendCountdown > 0) {
-      return;
-    }
-
-    setResendCountdown(30);
-  };
-
-  if (isVerifyStep) {
-    return (
-      <section className="relative min-h-screen bg-[#05080f] px-5 py-8 text-slate-100">
-        <button
-          type="button"
-          className="inline-block"
-          aria-label="Back to password step"
-          onClick={() => setSearchParams({ step: "password", email: savedEmail })}
-        >
-          <img src={coinbaseLogo} alt="Coinbase" className="h-8 w-auto brightness-0 invert" />
-        </button>
-
-        <div className="mx-auto mt-10 w-full max-w-[560px]">
-          <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Enter the code we emailed you</h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-400 sm:text-base">
-            Check your email <strong className="text-slate-100">{savedEmail || "your@email.com"}</strong>. This helps us keep your account secure by verifying that it's really you.
-          </p>
-
-          <p className="mt-8 text-lg font-semibold text-white">Enter 6-digit code</p>
-
-          <div className="mt-4 flex gap-3 sm:gap-4">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <input
-                key={index}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                className="h-16 w-14 rounded-2xl border border-slate-700 bg-[#1f2430] text-center text-xl text-white outline-none focus:border-blue-500"
-              />
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleResendClick}
-            disabled={resendCountdown > 0}
-            className={`mt-10 h-12 w-full max-w-[460px] rounded-[999px] text-lg font-semibold transition-colors ${
-              resendCountdown > 0
-                ? "border border-slate-700 bg-[#1f2430] text-slate-500"
-                : "border border-[#1555e8] bg-[#1555e8] text-white hover:bg-[#1b5ef9]"
-            }`}
-          >
-            {resendCountdown > 0 ? `Resend code in ${resendCountdown}` : "Resend code"}
-          </button>
-
-          <p className="mt-8 text-center text-sm text-slate-300">
-            Can't access?{" "}
-            <button type="button" className="font-semibold text-[#0b5cff] hover:text-[#2d74ff]">
-              Update your 2FA
-            </button>
-          </p>
-        </div>
-      </section>
-    );
-  }
-
-  if (isPasswordStep) {
-    return (
-      <section className="relative min-h-screen bg-[#05080f] px-5 py-8 text-slate-100">
-        <button type="button" className="inline-block" aria-label="Back to email step" onClick={() => setSearchParams({})}>
-          <img src={coinbaseLogo} alt="Coinbase" className="h-8 w-auto brightness-0 invert" />
-        </button>
-
-        <div className="mx-auto mt-8 w-full max-w-[460px]">
-          <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">Sign in to Coinbase</h1>
-
-          <div className="mt-7 w-full rounded-2xl border border-slate-700 bg-[#1f2430] px-4 py-3">
-            <div className="flex items-center gap-4">
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-slate-700/40 text-slate-400">
-                <UserBadgeIcon />
-              </span>
-              <p className="text-xl font-semibold tracking-tight text-slate-100">{savedEmail || "your@email.com"}</p>
-            </div>
-          </div>
-
-          <form className="mt-8 w-full space-y-4" onSubmit={handlePasswordContinue}>
-            <label className="block text-base font-semibold text-white">
-              Password
-              <div className="mt-2 flex h-12 items-center rounded-2xl border border-[#1555e8] bg-[#1f2430] px-5">
-                <input
-                  type="password"
-                  value={passwordInput}
-                  onChange={(event) => setPasswordInput(event.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-100 outline-none"
-                  placeholder="Enter your password"
-                />
-                <span className="text-slate-500">
-                  <EyeIcon />
-                </span>
-              </div>
-            </label>
-
-            {loginError ? (
-              <p className="text-sm text-rose-400">{loginError}</p>
-            ) : null}
-
-            <button type="button" className="text-base font-semibold text-[#0b5cff] hover:text-[#2d74ff]">
-              Forgot password?
-            </button>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="mt-2 h-12 w-full rounded-[999px] bg-[#4052d2] text-base font-semibold text-white transition-colors hover:bg-[#4a5de2] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmitting ? "Signing in..." : "Continue"}
-            </button>
-          </form>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="relative min-h-screen bg-[#05080f] px-5 py-8 text-slate-100">
       <Link to="/" className="inline-block" aria-label="Coinbase home">
         <img src={coinbaseLogo} alt="Coinbase" className="h-8 w-auto brightness-0 invert" />
       </Link>
 
-      <div className="mx-auto mt-6 w-full max-w-[460px]">
-        <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Sign in to Coinbase</h1>
+      <div className="mx-auto mt-10 w-full max-w-[460px]">
+        <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Sign in to Coinbase</h1>
+        <p className="mt-3 text-sm text-slate-400 sm:text-base">Use your email and password to sign in.</p>
 
-        <div className="mt-4 rounded-lg border border-orange-400/30 bg-orange-500/10 p-3 text-sm text-orange-200">
-          <strong>Demo app</strong> – do not use your real password
+        <div className="mt-6 rounded-3xl border border-slate-700 bg-[#121827] p-8 shadow-xl shadow-slate-950/30">
+          <form onSubmit={handleLogin} className="space-y-5">
+            <label className="block text-sm font-semibold text-slate-200">
+              Email
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                className="mt-3 w-full rounded-2xl border border-slate-700 bg-[#141b2e] px-4 py-3 text-sm text-slate-100 outline-none focus:border-blue-500"
+              />
+            </label>
+
+            <label className="block text-sm font-semibold text-slate-200">
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Enter your password"
+                className="mt-3 w-full rounded-2xl border border-slate-700 bg-[#141b2e] px-4 py-3 text-sm text-slate-100 outline-none focus:border-blue-500"
+              />
+            </label>
+
+            {loginError ? <p className="text-sm text-rose-400">{loginError}</p> : null}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-4 w-full rounded-[999px] bg-[#4052d2] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#4a5de2] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? "Signing in..." : "Sign in"}
+            </button>
+          </form>
         </div>
 
-        <form className="mt-8 w-full space-y-4" onSubmit={handleEmailContinue}>
-          <label className="block text-lg font-semibold text-white">
-            Email
-            <input
-              type="email"
-              value={emailInput}
-              onChange={(event) => setEmailInput(event.target.value)}
-              placeholder="Your email address"
-              className="mt-2 h-12 w-full rounded-2xl border border-slate-700 bg-[#1f2430] px-5 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-blue-500"
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="h-12 w-full rounded-[999px] bg-[#4052d2] text-lg font-semibold text-white transition-colors hover:bg-[#4a5de2]"
-          >
-            Continue
-          </button>
-        </form>
-
-        <div className="my-7 flex w-full items-center gap-4 text-sm font-semibold text-slate-500">
+        <div className="my-6 flex items-center gap-3 text-sm text-slate-400">
           <span className="h-px flex-1 bg-slate-700" />
           <span>OR</span>
           <span className="h-px flex-1 bg-slate-700" />
         </div>
 
-        <div className="w-full space-y-4">
-          <button
-            type="button"
-            className="flex h-12 w-full items-center justify-center gap-3 rounded-[999px] border border-slate-700 bg-[#1f2430] text-lg font-semibold text-white transition-colors hover:bg-[#262d3a]"
-          >
-            <PasskeyIcon />
-            <span>Sign in with Passkey</span>
-          </button>
-
+        <div className="space-y-4">
           <button
             type="button"
             className="flex h-12 w-full items-center justify-center gap-3 rounded-[999px] border border-slate-700 bg-[#1f2430] text-lg font-semibold text-white transition-colors hover:bg-[#262d3a]"
@@ -338,10 +154,6 @@ function SignIn() {
           <Link to="/signup" className="font-semibold text-[#0b5cff] hover:text-[#2d74ff]">
             Sign up
           </Link>
-        </p>
-
-        <p className="mt-5 text-center text-xs leading-relaxed text-slate-500">
-          Not your device? Use a private window. See our <a href="#" className="underline hover:text-slate-300">Privacy Policy</a> for more info.
         </p>
       </div>
     </section>
