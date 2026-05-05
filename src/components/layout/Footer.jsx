@@ -140,9 +140,16 @@ function Footer() {
         </div>
 
         <div className="mt-5 border-t border-slate-300 pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
-            <p className="text-slate-700">(c) 2026 Coinbase | Privacy | Terms & Conditions</p>
-            <p>Global | English</p>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
+              <p className="text-slate-700">(c) 2026 Coinbase | Privacy | Terms & Conditions</p>
+              <p>Global | English</p>
+            </div>
+            <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-800 border border-blue-200">
+              <p>
+                <strong>Demo Disclaimer:</strong> This is a demo project. Please do not enter real personal information or passwords.
+              </p>
+            </div>
           </div>
         </div>
       </div>

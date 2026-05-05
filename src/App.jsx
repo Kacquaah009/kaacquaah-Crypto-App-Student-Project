@@ -1,6 +1,7 @@
 import { Route, Routes, useLocation } from "react-router-dom";
 import Footer from "./components/layout/Footer.jsx";
 import Navbar from "./components/layout/Navbar.jsx";
+import WarningBanner from "./components/layout/WarningBanner.jsx";
 import AssetDetail from "./pages/AssetDetail.jsx";
 import Explore from "./pages/Explore.jsx";
 import Home from "./pages/Home.jsx";
@@ -14,7 +15,12 @@ function App() {
 
   return (
     <div className={`min-h-screen text-slate-900 ${isAuthRoute ? "bg-[#05080f]" : "bg-slate-50"}`}>
-      {isAuthRoute ? null : <Navbar />}
+      {isAuthRoute ? null : (
+        <>
+          <WarningBanner />
+          <Navbar />
+        </>
+      )}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />

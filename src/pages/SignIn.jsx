@@ -237,6 +237,10 @@ function SignIn() {
       <div className="mx-auto mt-6 w-full max-w-[460px]">
         <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Sign in to Coinbase</h1>
 
+        <div className="mt-4 rounded-lg border border-orange-400/30 bg-orange-500/10 p-3 text-sm text-orange-200">
+          <strong>Demo app</strong> – do not use your real password
+        </div>
+
         <form className="mt-8 w-full space-y-4" onSubmit={handleEmailContinue}>
           <label className="block text-lg font-semibold text-white">
             Email

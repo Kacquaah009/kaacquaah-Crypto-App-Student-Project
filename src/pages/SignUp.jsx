@@ -156,6 +156,10 @@ function SignUp() {
           <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Create your account</h1>
           <p className="mt-2 text-sm text-slate-400 sm:text-base">Access all that Coinbase has to offer with a single account.</p>
 
+          <div className="mt-4 rounded-lg border border-orange-400/30 bg-orange-500/10 p-3 text-sm text-orange-200">
+            <strong>Demo app</strong> – do not use your real password
+          </div>
+
           <form className="mx-auto mt-8 w-full max-w-[460px] space-y-4" onSubmit={handleContinue}>
             <label className="block text-lg font-semibold text-white">
               Email
